@@ -13,8 +13,7 @@ CREATE TABLE users (
 
 CREATE INDEX idx_users_email ON users USING btree (email);
 
-INSERT INTO users (email, encrypted_password) VALUES ('a@b.com', crypt('something-secure', gen_salt('bf')));
-
+-- INSERT INTO users (email, encrypted_password) VALUES ('a@b.com', crypt('something-secure', gen_salt('bf')));
 -- SELECT id FROM users WHERE email = 'a@b.com' AND password = crypt('something-secure', password);
 -- SELECT id FROM users WHERE email = 'a@b.com' AND password = crypt('something-incorrect', password);
 
@@ -32,12 +31,12 @@ CREATE TABLE currencies (
 
 CREATE INDEX idx_currencies_symbol ON currencies USING btree (symbol);
 
-INSERT INTO currencies
-  (symbol, significant_digits, attributes)
-VALUES
-  ('USD', 2, '{"description": "United States Dollar"}'::JSON),
-  ('BTC', 8, '{"description": "Bitcoin"}'::JSON),
-  ('ETH', 16, '{"description": "Ethereum"}'::JSON);
+-- INSERT INTO currencies
+--   (symbol, significant_digits, attributes)
+-- VALUES
+--   ('USD', 2, '{"description": "United States Dollar"}'::JSON),
+--   ('BTC', 8, '{"description": "Bitcoin"}'::JSON),
+--   ('ETH', 16, '{"description": "Ethereum"}'::JSON);
 
 -- --------------------------------------------------------
 -- -- Table: Markets
@@ -54,11 +53,11 @@ CREATE TABLE markets (
 
 CREATE INDEX idx_markets_base_symbol_quote_symbol ON markets USING btree (base_symbol, quote_symbol);
 
-INSERT INTO markets
-  (base_symbol, quote_symbol)
-VALUES
-  ('BTC', 'USD'),
-  ('ETH', 'USD');
+-- INSERT INTO markets
+--   (base_symbol, quote_symbol)
+-- VALUES
+--   ('BTC', 'USD'),
+--   ('ETH', 'USD');
 
 -- --------------------------------------------------------
 -- -- Table: Offers
