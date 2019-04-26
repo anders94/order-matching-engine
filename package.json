@@ -1,0 +1,28 @@
+{
+  "name": "order-matching-engine",
+  "version": "0.0.1",
+  "description": "An order matching engine implemented as PostgreSQL stored procedures.",
+  "main": "app.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anders94/order-matching-engine.git"
+  },
+  "keywords": [
+    "order",
+    "matching",
+    "exchange",
+    "engine"
+  ],
+  "author": "Anders Brownworth",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/anders94/order-matching-engine/issues"
+  },
+  "homepage": "https://github.com/anders94/order-matching-engine#readme",
+  "dependencies": {
+    "db-migrate-pg": "^0.5.0"
+  }
+}

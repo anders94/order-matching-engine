@@ -1,0 +1,26 @@
+{
+    "dev": {
+	"driver": "pg",
+	"user": "ome",
+	"password": {"ENV": "DEV_PASSWORD"},
+	"host": "localhost",
+	"database": "ome_dev"
+    },
+
+    "test": {
+	"driver": "pg",
+	"user": "ome",
+	"password": {"ENV": "TEST_PASSWORD"},
+	"host": "localhost",
+	"database": "ome_test"
+    },
+
+    "prod": {
+	"driver": "pg",
+	"user": "ome",
+	"password": {"ENV": "PROD_PASSWORD"},
+	"host": "localhost",
+	"database": "ome_prod"
+    },
+    "sql-file" : true
+}
