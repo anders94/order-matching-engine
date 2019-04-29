@@ -1,4 +1,12 @@
 {
+    "bootstrap": {
+	"driver": "pg",
+	"user": "ome",
+	"password": {"ENV": "ADMIN_PASSWORD"},
+	"host": "localhost",
+	"database": "template1"
+    },
+
     "dev": {
 	"driver": "pg",
 	"user": "ome",

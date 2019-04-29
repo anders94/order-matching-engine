@@ -24,34 +24,31 @@ Install `db-migrate`:
 npm install -g db-migrate
 ```
 
-Set environment variables for database passwords you intend to use:
-
-* `DEV_PASSWORD`
-* `TEST_PASSWORD`
-* `PROD_PASSWORD`
-
-Create the database user: (superuser permissions are necessary to add the pgcrypto extension but may be revoked later with `ALTER ROLE ome nosuperuser;`)
+Create the database user: (superuser permissions are necessary to add the pgcrypto extension in the first migration but may be revoked later with `ALTER ROLE ome nosuperuser;`)
 ```
 create user ome with password 'super-secret-password' superuser;
 ```
 
+Edit `database.json` to taste.
+
+Set environment variables for passwords you intend to use: (it might be handy to keep this in a file you source - git will ignore a file called `environment`)
+```
+export ADMIN_PASSWORD="super-secret-password"` # this password is only used in the next step to create the databases
+export DEV_PASSWORD="super-secret-password"
+export TEST_PASSWORD="super-secret-password"
+export PROD_PASSWORD="super-secret-password"
+```
+
 Create databases:
 ```
-create database ome_dev;
-create database ome_test;
-create database ome_prod;
+db-migrate db:create ome_dev -e bootstrap
+db-migrate db:create ome_test -e bootstrap
+db-migrate db:create ome_prod -e bootstrap
 ```
 
-Or you could create them with `db-migrate` (doesn't seem to be working yet)
+Bring database schema to the current version: (run all migrations that haven't yet been run. This defaults to the dev environment)
 ```
-db-migrate db:create ome_dev -e dev
-db-migrate db:create ome_test -e dev
-db-migrate db:create ome_prod -e dev
-```
-
-Bring database schema to the current version: (run all migrations that haven't yet been run)
-```
-db-migrate up -e dev
+db-migrate up
 ```
 
 ## Test
