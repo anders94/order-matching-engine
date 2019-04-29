@@ -4,6 +4,7 @@
 
 CREATE TABLE users (
   id                 UUID            NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+  created            TIMESTAMP       NOT NULL DEFAULT now(),
   email              VARCHAR(128)    NOT NULL UNIQUE,
   encrypted_password VARCHAR(128)    NOT NULL,
   attributes         JSON            NOT NULL DEFAULT '{}'::JSON,
@@ -23,6 +24,7 @@ CREATE INDEX idx_users_email ON users USING btree (email);
 
 CREATE TABLE currencies (
   symbol             VARCHAR(8)      NOT NULL,
+  created            TIMESTAMP       NOT NULL DEFAULT now(),
   significant_digits INT             NOT NULL,
   attributes         JSON            NOT NULL DEFAULT '{}'::JSON,
   obsolete           BOOLEAN         NOT NULL DEFAULT FALSE,
@@ -44,6 +46,7 @@ CREATE INDEX idx_currencies_symbol ON currencies USING btree (symbol);
 
 CREATE TABLE markets (
   id                 UUID            NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+  created            TIMESTAMP       NOT NULL DEFAULT now(),
   base_symbol        VARCHAR(8)      NOT NULL REFERENCES currencies(symbol) ON DELETE RESTRICT,
   quote_symbol       VARCHAR(8)      NOT NULL REFERENCES currencies(symbol) ON DELETE RESTRICT,
   attributes         JSON            NOT NULL DEFAULT '{}'::JSON,
@@ -65,13 +68,14 @@ CREATE INDEX idx_markets_base_symbol_quote_symbol ON markets USING btree (base_s
 
 CREATE TABLE offers (
   id                 UUID            NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+  created            TIMESTAMP       NOT NULL DEFAULT now(),
   user_id            UUID            NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   market_id          UUID            NOT NULL REFERENCES markets(id) ON DELETE RESTRICT,
   side               buy_sell        NOT NULL,
   price              NUMERIC(32, 16) NOT NULL CHECK (price > 0),
   volume             NUMERIC(32, 16) NOT NULL CHECK (volume > 0),
-  unfilled           NUMERIC(32, 16) NOT NULL CHECK (unfilled = volume),
-  active             BOOLEAN         NOT NULL DEFAULT TRUE CHECK (unfilled = volume)
+  unfilled           NUMERIC(32, 16) NOT NULL CHECK (unfilled <= volume),
+  active             BOOLEAN         NOT NULL DEFAULT TRUE
 ) WITH (OIDS=FALSE);
 
 CREATE INDEX idx_offers_market_id_side ON offers USING btree (market_id, side);
