@@ -54,9 +54,28 @@ Bring database schema to the current version: (run all migrations that haven't y
 db-migrate up -e dev
 ```
 
+## Test
+
+Run the tests:
+```
+npm test
+```
+
 ## Run
 
 Run server:
 ```
 npm start
+```
+
+## Test Data
+
+You can add a set of testing data with:
+```
+dm-migrate up:test
+```
+
+and remove it with:
+```
+dm-migrate down:test
 ```

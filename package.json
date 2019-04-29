@@ -4,7 +4,7 @@
   "description": "An order matching engine implemented as PostgreSQL stored procedures.",
   "main": "app.js",
   "scripts": {
-    "test": "test"
+    "test": "node test"
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/anders94/order-matching-engine#readme",
   "dependencies": {
-    "db-migrate-pg": "^0.5.0"
+    "async": "^2.6.2",
+    "db-migrate-pg": "^0.5.0",
+    "tape": "^4.10.1"
   }
 }
