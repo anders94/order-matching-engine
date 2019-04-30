@@ -73,19 +73,23 @@ CREATE INDEX idx_offers_market_id_side ON offers USING btree (market_id, side);
 -- -- Table: Fills
 -- --------------------------------------------------------
 --
--- There will be 2 fills for every exchange - the maker's fill which will have an offer_id
--- and the taker's fill which won't because their order was not an open offer at that point.
+-- Having the taker_user_id (which is a copy of the user_id from the offer table) and the price here
+-- (which is also copied from the offer table) is useful so most data you might select against is in
+-- the fills table and potentially allows completed offers to be pruned if the constraints are relaxed.
+-- Example:
+-- SELECT * FROM fills WHERE maker_user_id = $1 OR taker_user_id = $1 ORDER BY created DESC LIMIT 100;
 
 CREATE TABLE fills (
   id                 UUID            NOT NULL UNIQUE DEFAULT gen_random_uuid(),
   created            TIMESTAMP       NOT NULL DEFAULT now(),
-  user_id            UUID            NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   market_id          UUID            NOT NULL REFERENCES markets(id) ON DELETE RESTRICT,
-  offer_id           UUID            REFERENCES offers(id) ON DELETE RESTRICT, -- NULL for the taker
-  side               buy_sell        NOT NULL,
+  offer_id           UUID            NOT NULL REFERENCES offers(id) ON DELETE RESTRICT,
+  maker_user_id      UUID            NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  taker_user_id      UUID            NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   price              NUMERIC(32, 16) NOT NULL CHECK (price > 0),
   volume             NUMERIC(32, 16) NOT NULL CHECK (volume > 0),
-  fee                NUMERIC(32, 16) NOT NULL DEFAULT 0.0
+  maker_fee          NUMERIC(32, 16) NOT NULL DEFAULT 0.0,
+  taker_fee          NUMERIC(32, 16) NOT NULL DEFAULT 0.0
 ) WITH (OIDS=FALSE);
 
-CREATE INDEX idx_offers_user_id_market_id ON fills USING btree (user_id, market_id);
+CREATE INDEX idx_offers_market_id_created_maker_user_id_taker_user_id ON fills USING btree (market_id, created, maker_user_id, taker_user_id);
