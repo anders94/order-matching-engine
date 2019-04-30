@@ -69,10 +69,10 @@ npm start
 
 You can add a set of testing data with:
 ```
-dm-migrate up:test
+dm-migrate up:test-data
 ```
 
 and remove it with:
 ```
-dm-migrate down:test
+dm-migrate down:test-data
 ```
