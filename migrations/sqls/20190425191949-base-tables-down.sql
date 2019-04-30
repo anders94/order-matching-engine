@@ -1,3 +1,6 @@
+DROP INDEX idx_fills_user_id_market_id;
+DROP TABLE fills;
+
 DROP INDEX idx_offers_market_id_side;
 DROP TABLE offers;
 

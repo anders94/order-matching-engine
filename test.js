@@ -97,6 +97,15 @@ async.series([
 	});
     },
     function(cb) {
+	test('Should have a fills table', function (t) {
+	    client.query('SELECT 1 FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2;', ['public', 'fills'], (err, res) => {
+		t.equal(1, res.rows.length);
+		t.end(err);
+		cb(err);
+	    });
+	});
+    },
+    function(cb) {
 	test('Should have 7 test offers', function (t) {
 	    client.query('SELECT * FROM offers WHERE active = TRUE;', [], (err, res) => {
 		t.equal(7, res.rows.length);
