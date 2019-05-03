@@ -1,0 +1,1 @@
+DROP FUNCTION match_limit_order(UUID, UUID, buy_sell, NUMERIC, NUMERIC, REFCURSOR, REFCURSOR);
