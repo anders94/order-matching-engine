@@ -139,7 +139,7 @@ ome_dev=# select created, market_id, offer_id, maker_user_id, taker_user_id, pri
 ```
 
 Submit a limit order to sell 2.5 BTC at $4993.00:
-
+```
 ome_dev=# SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'sell', 4993.0, 2.5, 'fills', 'offer');
 NOTICE:  starting limit order
 NOTICE:  Found buy match (9aa784a7-9c2a-4e47-915c-414dc5ef94ba,"2019-05-03 19:11:42.53733",25c8a195-7936-4ac2-9d17-39348210dc87,9b4719da-1bf3-4540-803d-e3d771793a3e,buy,4999.5000000000000000,1.1210000000000000,1.1210000000000000,t)
