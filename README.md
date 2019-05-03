@@ -1,11 +1,13 @@
 # order-matching-engine
 
-This is an order matching engine implemented within PostgreSQL stored procedutes. A lightweight Node.js based
-server is used to interact with the engine. Database migrations are handled by `db-migrate` and `should` is
-used as a framework for tests. PostgreSQL `NOTIFY` is used to push notifications of trading activity via a
-websocket server.
+This order matching engine is implemented within PostgreSQL as stored procedutes. Database migrations are
+handled by `db-migrate` and `tape` is used for tests.
 
-This is in its _very early stages_ and is _not currently functional_.
+This is in its *early stages* and is *not currently functional*.
+
+## Why?
+
+Isn't an in-memory matching engine going to be faster? Probably, but there are other tradeoffs. Initially I simply wanted to see if this was possible. It turns out it is not only possible but fairly robust and, critically, a much simpler architecture. That’s mostly because everything that is easiest implemented as a singleton is implemented in the database. This design allows order submissions from a number of connected clients while guaranteeing time ordered transactions and transactional integrity.
 
 ## Prerequisites
 
@@ -19,7 +21,7 @@ Install node packages:
 npm install
 ```
 
-Install `db-migrate`:
+Install `db-migrate` globally so migrations can be run from the command line:
 ```
 npm install -g db-migrate
 ```
@@ -46,7 +48,7 @@ db-migrate db:create ome_test -e bootstrap
 db-migrate db:create ome_prod -e bootstrap
 ```
 
-Bring database schema to the current version: (run all migrations that haven't yet been run. This defaults to the dev environment)
+Bring database schema to the current version: (run all migrations that haven't yet been run) This defaults to the dev environment.
 ```
 db-migrate up
 ```
@@ -69,10 +71,10 @@ npm start
 
 You can add a set of testing data with:
 ```
-dm-migrate up:test-data
+db-migrate up:test-data
 ```
 
 and remove it with:
 ```
-dm-migrate down:test-data
+db-migrate down:test-data
 ```
