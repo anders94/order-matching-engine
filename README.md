@@ -3,7 +3,7 @@
 This order matching engine is implemented within PostgreSQL as stored procedutes. Database migrations are
 handled by `db-migrate` and `tape` is used for tests.
 
-This is in its *early stages* and is *not currently functional*.
+This project is in its *early stages*.
 
 ## Why?
 
@@ -60,13 +60,6 @@ Run the tests:
 npm test
 ```
 
-## Run
-
-Run server:
-```
-npm start
-```
-
 ## Test Data
 
 You can add a set of testing data with:
@@ -77,4 +70,111 @@ db-migrate up:test-data
 and remove it with:
 ```
 db-migrate down:test-data
+```
+
+## Try it
+
+Reset the dev database with a bunch of test orders:
+```
+db-migrate down:test-data  # in case there is old data in there
+db-migrate up:test-data
+```
+
+For the rest of this, you'll need to execute SQL directly:
+```
+psql ome_dev -U ome
+```
+
+See the current state of the book:
+```
+ome_dev=# SELECT side, price, volume, unfilled, volume - unfilled AS filled FROM offers WHERE market_id = (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD') AND active = TRUE ORDER BY price;
+ side |         price         |       volume       |      unfilled      |       filled       
+------+-----------------------+--------------------+--------------------+--------------------
+ buy  | 4990.0000000000000000 | 1.2130000000000000 | 1.2130000000000000 | 0.0000000000000000
+ buy  | 4995.0000000000000000 | 0.9020000000000000 | 0.9020000000000000 | 0.0000000000000000
+ buy  | 4995.0000000000000000 | 0.2830000000000000 | 0.2830000000000000 | 0.0000000000000000
+ buy  | 4999.5000000000000000 | 1.1210000000000000 | 1.1210000000000000 | 0.0000000000000000
+ sell | 5001.0000000000000000 | 0.8160000000000000 | 0.8160000000000000 | 0.0000000000000000
+ sell | 5005.0000000000000000 | 1.3750000000000000 | 1.3750000000000000 | 0.0000000000000000
+ sell | 5010.0000000000000000 | 0.9230000000000000 | 0.9230000000000000 | 0.0000000000000000
+(7 rows)
+```
+
+Submit a limit order to buy 0.5 BTC at $5010.00:
+```
+ome_dev=# SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'buy', 5010.0, 0.5, 'fills', 'offer');
+NOTICE:  starting limit order
+NOTICE:  Found sell match (be53e94f-3aad-4955-8c4f-a0e21e5cc7f6,"2019-05-03 19:11:42.53733",e3fd6060-1de2-4ada-81e1-3ac538bb6a65,9b4719da-1bf3-4540-803d-e3d771793a3e,sell,5001.0000000000000000,0.8160000000000000,0.8160000000000000,t)
+NOTICE:    remaining 0.5000000000000000 < match.unfilled 0.8160000000000000 = this offer is NOT completely filled by this order
+NOTICE:    order complete
+NOTICE:  Found sell match (944fc03d-3dd7-49f6-9fca-585892c39b67,"2019-05-03 19:11:42.53733",f93b0c98-0d7b-4606-837f-9fb0a6503674,9b4719da-1bf3-4540-803d-e3d771793a3e,sell,5005.0000000000000000,1.3750000000000000,1.3750000000000000,t)
+NOTICE:  Found sell match (08bcc46f-fb53-4c3d-8590-bff854fd37cc,"2019-05-03 19:11:42.53733",f93b0c98-0d7b-4606-837f-9fb0a6503674,9b4719da-1bf3-4540-803d-e3d771793a3e,sell,5010.0000000000000000,0.9230000000000000,0.9230000000000000,t)
+ match_limit_order 
+-------------------
+(0 rows)
+```
+
+See the updated order book:
+```
+ome_dev=# SELECT side, price, volume, unfilled, volume - unfilled AS filled FROM offers WHERE market_id = (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD') AND active = TRUE ORDER BY price;
+ side |         price         |       volume       |      unfilled      |       filled       
+------+-----------------------+--------------------+--------------------+--------------------
+ buy  | 4990.0000000000000000 | 1.2130000000000000 | 1.2130000000000000 | 0.0000000000000000
+ buy  | 4995.0000000000000000 | 0.9020000000000000 | 0.9020000000000000 | 0.0000000000000000
+ buy  | 4995.0000000000000000 | 0.2830000000000000 | 0.2830000000000000 | 0.0000000000000000
+ buy  | 4999.5000000000000000 | 1.1210000000000000 | 1.1210000000000000 | 0.0000000000000000
+ sell | 5001.0000000000000000 | 0.8160000000000000 | 0.3160000000000000 | 0.5000000000000000
+ sell | 5005.0000000000000000 | 1.3750000000000000 | 1.3750000000000000 | 0.0000000000000000
+ sell | 5010.0000000000000000 | 0.9230000000000000 | 0.9230000000000000 | 0.0000000000000000
+(7 rows)
+```
+
+See the fill:
+```
+ome_dev=# select created, market_id, offer_id, maker_user_id, taker_user_id, price, volume from fills;
+          created           |              market_id               |               offer_id               |            maker_user_id             |            taker_user_id             |         price         |       volume       
+----------------------------+--------------------------------------+--------------------------------------+--------------------------------------+--------------------------------------+-----------------------+--------------------
+ 2019-05-03 19:12:22.096189 | 9b4719da-1bf3-4540-803d-e3d771793a3e | be53e94f-3aad-4955-8c4f-a0e21e5cc7f6 | e3fd6060-1de2-4ada-81e1-3ac538bb6a65 | 047747c9-307d-47c6-9f99-07a3598e238b | 5001.0000000000000000 | 0.5000000000000000
+(1 row)
+```
+
+Submit a limit order to sell 2.5 BTC at $4993.00:
+
+ome_dev=# SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'sell', 4993.0, 2.5, 'fills', 'offer');
+NOTICE:  starting limit order
+NOTICE:  Found buy match (9aa784a7-9c2a-4e47-915c-414dc5ef94ba,"2019-05-03 19:11:42.53733",25c8a195-7936-4ac2-9d17-39348210dc87,9b4719da-1bf3-4540-803d-e3d771793a3e,buy,4999.5000000000000000,1.1210000000000000,1.1210000000000000,t)
+NOTICE:    remaining 2.5000000000000000 >= match.filled 1.1210000000000000 = this offer is NOT completely filled by this order
+NOTICE:  Found buy match (f846ef7a-4cda-4395-bd50-52382269591d,"2019-05-03 19:11:42.53733",047747c9-307d-47c6-9f99-07a3598e238b,9b4719da-1bf3-4540-803d-e3d771793a3e,buy,4995.0000000000000000,0.9020000000000000,0.9020000000000000,t)
+NOTICE:    remaining 1.3790000000000000 >= match.filled 0.9020000000000000 = this offer is NOT completely filled by this order
+NOTICE:  Found buy match (2be31a29-5f47-48b1-bd0e-e152c72db6de,"2019-05-03 19:11:42.53733",25c8a195-7936-4ac2-9d17-39348210dc87,9b4719da-1bf3-4540-803d-e3d771793a3e,buy,4995.0000000000000000,0.2830000000000000,0.2830000000000000,t)
+NOTICE:    remaining 0.4770000000000000 >= match.filled 0.2830000000000000 = this offer is NOT completely filled by this order
+NOTICE:  INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (047747c9-307d-47c6-9f99-07a3598e238b, 9b4719da-1bf3-4540-803d-e3d771793a3e, sell, 4993.0, 0.1940000000000000);
+ match_limit_order 
+-------------------
+(0 rows)
+```
+
+See the resulting order book: (notice the new sell offer for 0.194 which is the unfilled remainder)
+```
+ome_dev=# SELECT side, price, volume, unfilled, volume - unfilled AS filled FROM offers WHERE market_id = (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD') AND active = TRUE ORDER BY price;
+ side |         price         |       volume       |      unfilled      |       filled       
+------+-----------------------+--------------------+--------------------+--------------------
+ buy  | 4990.0000000000000000 | 1.2130000000000000 | 1.2130000000000000 | 0.0000000000000000
+ sell | 4993.0000000000000000 | 0.1940000000000000 | 0.1940000000000000 | 0.0000000000000000
+ sell | 5001.0000000000000000 | 0.8160000000000000 | 0.3160000000000000 | 0.5000000000000000
+ sell | 5005.0000000000000000 | 1.3750000000000000 | 1.3750000000000000 | 0.0000000000000000
+ sell | 5010.0000000000000000 | 0.9230000000000000 | 0.9230000000000000 | 0.0000000000000000
+(5 rows)
+```
+
+See all the fills: (we got more than one fill for this larger order)
+```
+ome_dev=# select created, market_id, offer_id, maker_user_id, taker_user_id, price, volume from fills;
+          created           |              market_id               |               offer_id               |            maker_user_id             |            taker_user_id             |         price         |       volume       
+----------------------------+--------------------------------------+--------------------------------------+--------------------------------------+--------------------------------------+-----------------------+--------------------
+ 2019-05-03 19:12:22.096189 | 9b4719da-1bf3-4540-803d-e3d771793a3e | be53e94f-3aad-4955-8c4f-a0e21e5cc7f6 | e3fd6060-1de2-4ada-81e1-3ac538bb6a65 | 047747c9-307d-47c6-9f99-07a3598e238b | 5001.0000000000000000 | 0.5000000000000000
+ 2019-05-03 19:13:15.470796 | 9b4719da-1bf3-4540-803d-e3d771793a3e | 9aa784a7-9c2a-4e47-915c-414dc5ef94ba | 25c8a195-7936-4ac2-9d17-39348210dc87 | 047747c9-307d-47c6-9f99-07a3598e238b | 4999.5000000000000000 | 1.1210000000000000
+ 2019-05-03 19:13:15.470796 | 9b4719da-1bf3-4540-803d-e3d771793a3e | f846ef7a-4cda-4395-bd50-52382269591d | 047747c9-307d-47c6-9f99-07a3598e238b | 047747c9-307d-47c6-9f99-07a3598e238b | 4995.0000000000000000 | 0.9020000000000000
+ 2019-05-03 19:13:15.470796 | 9b4719da-1bf3-4540-803d-e3d771793a3e | 2be31a29-5f47-48b1-bd0e-e152c72db6de | 25c8a195-7936-4ac2-9d17-39348210dc87 | 047747c9-307d-47c6-9f99-07a3598e238b | 4995.0000000000000000 | 0.2830000000000000
+(4 rows)
 ```
