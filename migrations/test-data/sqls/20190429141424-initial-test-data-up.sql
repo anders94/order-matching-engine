@@ -8,9 +8,9 @@ VALUES
   ('user-c@example.com', crypt('hjs02ye37wjdh36qidne72b2f', gen_salt('bf'))),
   ('user-d@example.com', crypt('m92ywnc84twgf9492hd647ywh', gen_salt('bf')));
 
--- add currencies
+-- add assets
 
-INSERT INTO currencies
+INSERT INTO assets
   (symbol, significant_digits, attributes)
 VALUES
   ('USD', 2, '{"description": "United States Dollar"}'::JSON),

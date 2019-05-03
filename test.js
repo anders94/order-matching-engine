@@ -70,8 +70,8 @@ async.series([
 	});
     },
     function(cb) {
-	test('Should have a currencies table', function (t) {
-	    client.query('SELECT 1 FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2;', ['public', 'currencies'], (err, res) => {
+	test('Should have an assets table', function (t) {
+	    client.query('SELECT 1 FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2;', ['public', 'assets'], (err, res) => {
 		t.equal(1, res.rows.length);
 		t.end(err);
 		cb(err);

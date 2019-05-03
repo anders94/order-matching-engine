@@ -21,19 +21,19 @@ CREATE INDEX idx_users_email ON users USING btree (email);
 -- SELECT id FROM users WHERE email = 'a@b.com' AND password = crypt('something-incorrect', password);
 
 -- --------------------------------------------------------
--- -- Table: Currencies
+-- -- Table: Assets
 -- --------------------------------------------------------
 
-CREATE TABLE currencies (
+CREATE TABLE assets (
   symbol             VARCHAR(8)      NOT NULL,
   created            TIMESTAMP       NOT NULL DEFAULT now(),
   significant_digits INT             NOT NULL,
   attributes         JSON            NOT NULL DEFAULT '{}'::JSON,
   obsolete           BOOLEAN         NOT NULL DEFAULT FALSE,
-  CONSTRAINT pk_currencies_symbol PRIMARY KEY (symbol)
+  CONSTRAINT pk_assets_symbol PRIMARY KEY (symbol)
 ) WITH (OIDS=FALSE);
 
-CREATE INDEX idx_currencies_symbol ON currencies USING btree (symbol);
+CREATE INDEX idx_assets_symbol ON assets USING btree (symbol);
 
 -- --------------------------------------------------------
 -- -- Table: Markets
@@ -42,8 +42,8 @@ CREATE INDEX idx_currencies_symbol ON currencies USING btree (symbol);
 CREATE TABLE markets (
   id                 UUID            NOT NULL UNIQUE DEFAULT gen_random_uuid(),
   created            TIMESTAMP       NOT NULL DEFAULT now(),
-  base_symbol        VARCHAR(8)      NOT NULL REFERENCES currencies(symbol) ON DELETE RESTRICT,
-  quote_symbol       VARCHAR(8)      NOT NULL REFERENCES currencies(symbol) ON DELETE RESTRICT,
+  base_symbol        VARCHAR(8)      NOT NULL REFERENCES assets(symbol) ON DELETE RESTRICT,
+  quote_symbol       VARCHAR(8)      NOT NULL REFERENCES assets(symbol) ON DELETE RESTRICT,
   attributes         JSON            NOT NULL DEFAULT '{}'::JSON,
   obsolete           BOOLEAN         NOT NULL DEFAULT FALSE,
   CONSTRAINT pk_markets_base_symbol_quote_symbol PRIMARY KEY (base_symbol, quote_symbol)

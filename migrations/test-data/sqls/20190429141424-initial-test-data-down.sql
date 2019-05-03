@@ -8,9 +8,9 @@ DELETE FROM offers WHERE user_id = (SELECT id FROM users WHERE email='user-d@exa
 DELETE FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD';
 DELETE FROM markets WHERE base_symbol = 'ETH' AND quote_symbol = 'USD';
 
-DELETE FROM currencies WHERE symbol = 'USD' AND significant_digits = 2;
-DELETE FROM currencies WHERE symbol = 'BTC' AND significant_digits = 8;
-DELETE FROM currencies WHERE symbol = 'ETH' AND significant_digits = 16;
+DELETE FROM assets WHERE symbol = 'USD' AND significant_digits = 2;
+DELETE FROM assets WHERE symbol = 'BTC' AND significant_digits = 8;
+DELETE FROM assets WHERE symbol = 'ETH' AND significant_digits = 16;
 
 DELETE FROM users WHERE email = 'user-a@example.com';
 DELETE FROM users WHERE email = 'user-b@example.com';
