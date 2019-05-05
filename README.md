@@ -178,3 +178,51 @@ ome_dev=# select created, market_id, offer_id, maker_user_id, taker_user_id, pri
  2019-05-03 19:13:15.470796 | 9b4719da-1bf3-4540-803d-e3d771793a3e | 2be31a29-5f47-48b1-bd0e-e152c72db6de | 25c8a195-7936-4ac2-9d17-39348210dc87 | 047747c9-307d-47c6-9f99-07a3598e238b | 4995.0000000000000000 | 0.2830000000000000
 (4 rows)
 ```
+
+The stored procedure returns 2 cursors which contain any fills the order had as well as the offer if one was created:
+```
+BEGIN;
+  SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'buy', 5010.0, 5.0, 'fills', 'offer');
+  FETCH ALL IN "fills";
+  FETCH ALL IN "offer";
+COMMIT;
+```
+
+Here's an example:
+```
+ome_dev=# BEGIN;
+BEGIN
+ome_dev=# SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'buy', 5010.0, 5.0, 'fills', 'offer');
+NOTICE:  starting limit order
+NOTICE:  Found sell match (3cf62411-8440-4591-aafa-b0ea9231f972,"2019-05-05 07:16:49.145293",bd8e7731-3b11-4a84-a92f-19a47bdf251d,b14ee127-161c-4e92-8942-ba73394f05ef,sell,5001.0000000000000000,0.8160000000000000,0.8160000000000000,t)
+NOTICE:    remaining 5.0000000000000000 >= match.filled 0.8160000000000000 = this offer is completely filled by this order
+NOTICE:  Found sell match (ffde512f-b3d1-4953-aa7c-9be10866c17a,"2019-05-05 07:16:49.145293",e7c2f9bb-fd0c-440d-a237-15c502177add,b14ee127-161c-4e92-8942-ba73394f05ef,sell,5005.0000000000000000,1.3750000000000000,1.3750000000000000,t)
+NOTICE:    remaining 4.1840000000000000 >= match.filled 1.3750000000000000 = this offer is completely filled by this order
+NOTICE:  Found sell match (0027f128-73e0-4d3a-81f4-091d8b6b06f9,"2019-05-05 07:16:49.145293",e7c2f9bb-fd0c-440d-a237-15c502177add,b14ee127-161c-4e92-8942-ba73394f05ef,sell,5010.0000000000000000,0.9230000000000000,0.9230000000000000,t)
+NOTICE:    remaining 2.8090000000000000 >= match.filled 0.9230000000000000 = this offer is completely filled by this order
+NOTICE:  INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (394d8efa-10da-45cf-ae76-e7bc75bcd772, b14ee127-161c-4e92-8942-ba73394f05ef, buy, 5010.0, 1.8860000000000000);
+ match_limit_order 
+-------------------
+ offer
+ fills
+(2 rows)
+
+ome_dev=# FETCH ALL IN "fills";
+               fill_id                |         price         |       volume       
+--------------------------------------+-----------------------+--------------------
+ 1f72a005-8056-414a-8809-746bcb8c0524 | 5001.0000000000000000 | 0.8160000000000000
+ 978f32b1-3853-4db7-befa-bc22f1b7c5f9 | 5005.0000000000000000 | 1.3750000000000000
+ fff962e8-44a3-4191-b107-e9e14cbbca0e | 5010.0000000000000000 | 0.9230000000000000
+(3 rows)
+
+ome_dev=# FETCH ALL IN "offer";
+                  id                  | side |         price         |       volume       
+--------------------------------------+------+-----------------------+--------------------
+ 3d54ef06-5dcf-4d22-834b-3bf4b1b5628e | buy  | 5010.0000000000000000 | 1.8860000000000000
+(1 row)
+
+ome_dev=# COMMIT;
+COMMIT
+ome_dev=#
+```
+
