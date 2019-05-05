@@ -81,7 +81,7 @@ BEGIN
   -- create an offer for whatever remains
   IF remaining > 0 THEN
     RAISE NOTICE 'INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (%, %, %, %, %);', _user_id, _market_id, _side, _price, remaining;
-    OPEN _offer FOR INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (_user_id, _market_id, _side, _price, remaining) RETURNING price, volume;
+    OPEN _offer FOR INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (_user_id, _market_id, _side, _price, remaining) RETURNING id, side, price, volume;
   ELSE
     OPEN _offer FOR SELECT WHERE 1=2;
   END IF;
