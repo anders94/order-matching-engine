@@ -62,8 +62,8 @@ CREATE TABLE offers (
   market_id          UUID            NOT NULL REFERENCES markets(id) ON DELETE RESTRICT,
   side               buy_sell        NOT NULL,
   price              NUMERIC(32, 16) NOT NULL CHECK (price > 0),
-  volume             NUMERIC(32, 16) NOT NULL CHECK (volume > 0),
-  unfilled           NUMERIC(32, 16) NOT NULL CHECK (unfilled <= volume),
+  amount             NUMERIC(32, 16) NOT NULL CHECK (amount > 0),
+  unfilled           NUMERIC(32, 16) NOT NULL CHECK (unfilled <= amount),
   active             BOOLEAN         NOT NULL DEFAULT TRUE
 ) WITH (OIDS=FALSE);
 
@@ -87,7 +87,7 @@ CREATE TABLE fills (
   maker_user_id      UUID            NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   taker_user_id      UUID            NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   price              NUMERIC(32, 16) NOT NULL CHECK (price > 0),
-  volume             NUMERIC(32, 16) NOT NULL CHECK (volume > 0),
+  amount             NUMERIC(32, 16) NOT NULL CHECK (amount > 0),
   maker_fee          NUMERIC(32, 16) NOT NULL DEFAULT 0.0,
   taker_fee          NUMERIC(32, 16) NOT NULL DEFAULT 0.0
 ) WITH (OIDS=FALSE);

@@ -1,12 +1,12 @@
 --
--- automatically populate 'unfilled' column with value from 'volume' column
+-- automatically populate 'unfilled' column with value from 'amount' column
 --
 -- Populating the 'unfilled' column shouldn't be the responsibility of the order submitter. This
 -- also limits errors by overwriting whatever is passed in the INSERT.
 
 CREATE OR REPLACE FUNCTION populate_unfilled() RETURNS trigger AS '
 BEGIN
-  NEW.unfilled := NEW.volume;
+  NEW.unfilled := NEW.amount;
   RETURN NEW;
 END;
 ' LANGUAGE plpgsql;

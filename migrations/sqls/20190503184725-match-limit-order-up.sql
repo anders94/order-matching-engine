@@ -1,3 +1,4 @@
+
 -------------------------------------------------------------------
 -- match_limit_order
 --
@@ -9,7 +10,7 @@
 -- Cursors containing resulting fills and order are not yet implemented.
 -------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION match_limit_order(_user_id UUID, _market_id UUID, _side buy_sell, _price NUMERIC, _volume NUMERIC, _fills REFCURSOR, _offer REFCURSOR)
+CREATE OR REPLACE FUNCTION match_limit_order(_user_id UUID, _market_id UUID, _side buy_sell, _price NUMERIC, _amount NUMERIC, _fills REFCURSOR, _offer REFCURSOR)
   RETURNS SETOF REFCURSOR
   LANGUAGE plpgsql
 AS $$
@@ -21,16 +22,16 @@ BEGIN
   CREATE TEMPORARY TABLE tmp_fills (
     fill_id UUID,
     price NUMERIC(32, 16),
-    volume NUMERIC(32, 16)
+    amount NUMERIC(32, 16)
   ) ON COMMIT DROP;
   CREATE TEMPORARY TABLE tmp_offer (
     offer_id UUID,
     side buy_sell,
     price NUMERIC(32, 16),
-    volume NUMERIC(32, 16)
+    amount NUMERIC(32, 16)
   ) ON COMMIT DROP;
   RAISE NOTICE 'starting limit order';
-  remaining := _volume;
+  remaining := _amount;
   -- take any offers that cross
   IF _side = 'buy' THEN
     FOR match IN SELECT * FROM offers WHERE side = 'sell' AND price <= _price AND active = TRUE ORDER BY price ASC, created ASC LOOP
@@ -40,7 +41,7 @@ BEGIN
           RAISE NOTICE '  remaining % < match.unfilled % = this offer is NOT completely filled by this order', remaining, match.unfilled;
           amount_taken := remaining;
           remaining := remaining - amount_taken;
-          WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, volume) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
+          WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, amount) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
           UPDATE offers SET unfilled = unfilled - amount_taken WHERE id = match.id;
 	  IF remaining = 0 THEN
 	    RAISE NOTICE '  order complete';
@@ -49,7 +50,7 @@ BEGIN
           RAISE NOTICE '  remaining % >= match.unfilled % = this offer is completely filled by this order', remaining, match.unfilled;
           amount_taken := match.unfilled;
           remaining := remaining - amount_taken;
-          WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, volume) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
+          WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, amount) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
           UPDATE offers SET unfilled = unfilled - amount_taken, active = FALSE WHERE id = match.id;
           IF remaining = 0 THEN
             RAISE NOTICE '  order complete';
@@ -65,7 +66,7 @@ BEGIN
           RAISE NOTICE '  remaining % < match.unfilled % = this offer isnt completely filled by this order', remaining, match.unfilled;
           amount_taken := remaining;
           remaining := remaining - amount_taken;
-          WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, volume) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
+          WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, amount) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
           UPDATE offers SET unfilled = unfilled - amount_taken WHERE id = match.id;
 	  IF remaining = 0 THEN
 	    RAISE NOTICE '  order complete';
@@ -74,7 +75,7 @@ BEGIN
           RAISE NOTICE '  remaining % >= match.unfilled % = this offer is NOT completely filled by this order', remaining, match.unfilled;
           amount_taken := match.unfilled;
           remaining := remaining - amount_taken;
-          WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, volume) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
+          WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, amount) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
           UPDATE offers SET unfilled = unfilled - amount_taken, active = FALSE WHERE id = match.id;
           IF remaining = 0 THEN
             RAISE NOTICE '  order complete';
@@ -87,8 +88,8 @@ BEGIN
 
   -- create an offer for whatever remains
   IF remaining > 0 THEN
-    RAISE NOTICE 'INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (%, %, %, %, %);', _user_id, _market_id, _side, _price, remaining;
-    WITH offer AS (INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (_user_id, _market_id, _side, _price, remaining) RETURNING id, side, price, volume) INSERT INTO tmp_offer SELECT * FROM offer;
+    RAISE NOTICE 'INSERT INTO offers (user_id, market_id, side, price, amount) VALUES (%, %, %, %, %);', _user_id, _market_id, _side, _price, remaining;
+    WITH offer AS (INSERT INTO offers (user_id, market_id, side, price, amount) VALUES (_user_id, _market_id, _side, _price, remaining) RETURNING id, side, price, amount) INSERT INTO tmp_offer SELECT * FROM offer;
   END IF;
 
   -- return results

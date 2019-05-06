@@ -116,9 +116,9 @@ async.series([
     },
     function(cb) {
 	test('Should not be able to INSERT crossd offers', function (t) {
-	    client.query('INSERT INTO offers (user_id, market_id, side, price, volume) VALUES ((SELECT id FROM users WHERE email=$1), (SELECT id FROM markets WHERE base_symbol=$2 and quote_symbol=$3), $4, $5, $6);', ['user-a@example.com', 'BTC', 'USD', 'sell', 2000.0, 1.0], (err, res) => {
+	    client.query('INSERT INTO offers (user_id, market_id, side, price, amount) VALUES ((SELECT id FROM users WHERE email=$1), (SELECT id FROM markets WHERE base_symbol=$2 and quote_symbol=$3), $4, $5, $6);', ['user-a@example.com', 'BTC', 'USD', 'sell', 2000.0, 1.0], (err, res) => {
 		t.equal(0, res.rowCount);
-		client.query('INSERT INTO offers (user_id, market_id, side, price, volume) VALUES ((SELECT id FROM users WHERE email=$1), (SELECT id FROM markets WHERE base_symbol=$2 and quote_symbol=$3), $4, $5, $6);', ['user-a@example.com', 'BTC', 'USD', 'buy', 6000.0, 1.0], (err, res) => {
+		client.query('INSERT INTO offers (user_id, market_id, side, price, amount) VALUES ((SELECT id FROM users WHERE email=$1), (SELECT id FROM markets WHERE base_symbol=$2 and quote_symbol=$3), $4, $5, $6);', ['user-a@example.com', 'BTC', 'USD', 'buy', 6000.0, 1.0], (err, res) => {
 		    t.equal(0, res.rowCount);
 		    t.end();
 		    cb();

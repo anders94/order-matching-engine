@@ -28,7 +28,7 @@ VALUES
 -- add a bunch of offers
 
 INSERT INTO offers
-  (user_id, market_id, side, price, volume)
+  (user_id, market_id, side, price, amount)
 VALUES
   ((SELECT id FROM users WHERE email='user-a@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'buy', 4990.0, 1.213),
   ((SELECT id FROM users WHERE email='user-a@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'buy', 4995.0, 0.902),

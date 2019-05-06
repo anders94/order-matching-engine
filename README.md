@@ -86,8 +86,8 @@ psql ome_dev -U ome
 
 See the current state of the book:
 ```
-ome_dev=# SELECT side, price, volume, unfilled, volume - unfilled AS filled FROM offers WHERE market_id = (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD') AND active = TRUE ORDER BY price;
- side |         price         |       volume       |      unfilled      |       filled       
+ome_dev=# SELECT side, price, amount, unfilled, amount - unfilled AS filled FROM offers WHERE market_id = (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD') AND active = TRUE ORDER BY price;
+ side |         price         |       amount       |      unfilled      |       filled       
 ------+-----------------------+--------------------+--------------------+--------------------
  buy  | 4990.0000000000000000 | 1.2130000000000000 | 1.2130000000000000 | 0.0000000000000000
  buy  | 4995.0000000000000000 | 0.9020000000000000 | 0.9020000000000000 | 0.0000000000000000
@@ -115,8 +115,8 @@ NOTICE:  Found sell match (08bcc46f-fb53-4c3d-8590-bff854fd37cc,"2019-05-03 19:1
 
 See the updated order book:
 ```
-ome_dev=# SELECT side, price, volume, unfilled, volume - unfilled AS filled FROM offers WHERE market_id = (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD') AND active = TRUE ORDER BY price;
- side |         price         |       volume       |      unfilled      |       filled       
+ome_dev=# SELECT side, price, amount, unfilled, amount - unfilled AS filled FROM offers WHERE market_id = (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD') AND active = TRUE ORDER BY price;
+ side |         price         |       amount       |      unfilled      |       filled       
 ------+-----------------------+--------------------+--------------------+--------------------
  buy  | 4990.0000000000000000 | 1.2130000000000000 | 1.2130000000000000 | 0.0000000000000000
  buy  | 4995.0000000000000000 | 0.9020000000000000 | 0.9020000000000000 | 0.0000000000000000
@@ -130,8 +130,8 @@ ome_dev=# SELECT side, price, volume, unfilled, volume - unfilled AS filled FROM
 
 See the fill:
 ```
-ome_dev=# select created, market_id, offer_id, maker_user_id, taker_user_id, price, volume from fills;
-          created           |              market_id               |               offer_id               |            maker_user_id             |            taker_user_id             |         price         |       volume       
+ome_dev=# select created, market_id, offer_id, maker_user_id, taker_user_id, price, amount from fills;
+          created           |              market_id               |               offer_id               |            maker_user_id             |            taker_user_id             |         price         |       amount       
 ----------------------------+--------------------------------------+--------------------------------------+--------------------------------------+--------------------------------------+-----------------------+--------------------
  2019-05-03 19:12:22.096189 | 9b4719da-1bf3-4540-803d-e3d771793a3e | be53e94f-3aad-4955-8c4f-a0e21e5cc7f6 | e3fd6060-1de2-4ada-81e1-3ac538bb6a65 | 047747c9-307d-47c6-9f99-07a3598e238b | 5001.0000000000000000 | 0.5000000000000000
 (1 row)
@@ -147,7 +147,7 @@ NOTICE:  Found buy match (f846ef7a-4cda-4395-bd50-52382269591d,"2019-05-03 19:11
 NOTICE:    remaining 1.3790000000000000 >= match.filled 0.9020000000000000 = this offer is NOT completely filled by this order
 NOTICE:  Found buy match (2be31a29-5f47-48b1-bd0e-e152c72db6de,"2019-05-03 19:11:42.53733",25c8a195-7936-4ac2-9d17-39348210dc87,9b4719da-1bf3-4540-803d-e3d771793a3e,buy,4995.0000000000000000,0.2830000000000000,0.2830000000000000,t)
 NOTICE:    remaining 0.4770000000000000 >= match.filled 0.2830000000000000 = this offer is NOT completely filled by this order
-NOTICE:  INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (047747c9-307d-47c6-9f99-07a3598e238b, 9b4719da-1bf3-4540-803d-e3d771793a3e, sell, 4993.0, 0.1940000000000000);
+NOTICE:  INSERT INTO offers (user_id, market_id, side, price, amount) VALUES (047747c9-307d-47c6-9f99-07a3598e238b, 9b4719da-1bf3-4540-803d-e3d771793a3e, sell, 4993.0, 0.1940000000000000);
  match_limit_order 
 -------------------
 (0 rows)
@@ -155,8 +155,8 @@ NOTICE:  INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (04
 
 See the resulting order book: (notice the new sell offer for 0.194 which is the unfilled remainder)
 ```
-ome_dev=# SELECT side, price, volume, unfilled, volume - unfilled AS filled FROM offers WHERE market_id = (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD') AND active = TRUE ORDER BY price;
- side |         price         |       volume       |      unfilled      |       filled       
+ome_dev=# SELECT side, price, amount, unfilled, amount - unfilled AS filled FROM offers WHERE market_id = (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD') AND active = TRUE ORDER BY price;
+ side |         price         |       amount       |      unfilled      |       filled       
 ------+-----------------------+--------------------+--------------------+--------------------
  buy  | 4990.0000000000000000 | 1.2130000000000000 | 1.2130000000000000 | 0.0000000000000000
  sell | 4993.0000000000000000 | 0.1940000000000000 | 0.1940000000000000 | 0.0000000000000000
@@ -168,8 +168,8 @@ ome_dev=# SELECT side, price, volume, unfilled, volume - unfilled AS filled FROM
 
 See all the fills: (we got more than one fill for this larger order)
 ```
-ome_dev=# select created, market_id, offer_id, maker_user_id, taker_user_id, price, volume from fills;
-          created           |              market_id               |               offer_id               |            maker_user_id             |            taker_user_id             |         price         |       volume       
+ome_dev=# select created, market_id, offer_id, maker_user_id, taker_user_id, price, amount from fills;
+          created           |              market_id               |               offer_id               |            maker_user_id             |            taker_user_id             |         price         |       amount       
 ----------------------------+--------------------------------------+--------------------------------------+--------------------------------------+--------------------------------------+-----------------------+--------------------
  2019-05-03 19:12:22.096189 | 9b4719da-1bf3-4540-803d-e3d771793a3e | be53e94f-3aad-4955-8c4f-a0e21e5cc7f6 | e3fd6060-1de2-4ada-81e1-3ac538bb6a65 | 047747c9-307d-47c6-9f99-07a3598e238b | 5001.0000000000000000 | 0.5000000000000000
  2019-05-03 19:13:15.470796 | 9b4719da-1bf3-4540-803d-e3d771793a3e | 9aa784a7-9c2a-4e47-915c-414dc5ef94ba | 25c8a195-7936-4ac2-9d17-39348210dc87 | 047747c9-307d-47c6-9f99-07a3598e238b | 4999.5000000000000000 | 1.1210000000000000
@@ -199,7 +199,7 @@ NOTICE:  Found sell match (ffde512f-b3d1-4953-aa7c-9be10866c17a,"2019-05-05 07:1
 NOTICE:    remaining 4.1840000000000000 >= match.filled 1.3750000000000000 = this offer is completely filled by this order
 NOTICE:  Found sell match (0027f128-73e0-4d3a-81f4-091d8b6b06f9,"2019-05-05 07:16:49.145293",e7c2f9bb-fd0c-440d-a237-15c502177add,b14ee127-161c-4e92-8942-ba73394f05ef,sell,5010.0000000000000000,0.9230000000000000,0.9230000000000000,t)
 NOTICE:    remaining 2.8090000000000000 >= match.filled 0.9230000000000000 = this offer is completely filled by this order
-NOTICE:  INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (394d8efa-10da-45cf-ae76-e7bc75bcd772, b14ee127-161c-4e92-8942-ba73394f05ef, buy, 5010.0, 1.8860000000000000);
+NOTICE:  INSERT INTO offers (user_id, market_id, side, price, amount) VALUES (394d8efa-10da-45cf-ae76-e7bc75bcd772, b14ee127-161c-4e92-8942-ba73394f05ef, buy, 5010.0, 1.8860000000000000);
  match_limit_order 
 -------------------
  offer
@@ -207,7 +207,7 @@ NOTICE:  INSERT INTO offers (user_id, market_id, side, price, volume) VALUES (39
 (2 rows)
 
 ome_dev=# FETCH ALL IN "fills";
-               fill_id                |         price         |       volume       
+               fill_id                |         price         |       amount       
 --------------------------------------+-----------------------+--------------------
  1f72a005-8056-414a-8809-746bcb8c0524 | 5001.0000000000000000 | 0.8160000000000000
  978f32b1-3853-4db7-befa-bc22f1b7c5f9 | 5005.0000000000000000 | 1.3750000000000000
@@ -215,7 +215,7 @@ ome_dev=# FETCH ALL IN "fills";
 (3 rows)
 
 ome_dev=# FETCH ALL IN "offer";
-                  id                  | side |         price         |       volume       
+                  id                  | side |         price         |       amount       
 --------------------------------------+------+-----------------------+--------------------
  3d54ef06-5dcf-4d22-834b-3bf4b1b5628e | buy  | 5010.0000000000000000 | 1.8860000000000000
 (1 row)
