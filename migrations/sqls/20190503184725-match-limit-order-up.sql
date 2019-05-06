@@ -63,8 +63,8 @@ BEGIN
     FOR match IN SELECT * FROM offers WHERE side = 'buy' AND price >= _price AND active = TRUE ORDER BY price DESC, created ASC LOOP
       RAISE NOTICE 'Found buy match %', match;
       IF amount_remaining > 0 THEN
-        IF amount_remaining <= match.unfilled THEN
-          RAISE NOTICE '  amount_remaining % <= match.unfilled % = this offer isnt completely filled by this order', amount_remaining, match.unfilled;
+        IF amount_remaining < match.unfilled THEN
+          RAISE NOTICE '  amount_remaining % < match.unfilled % = this offer isnt completely filled by this order', amount_remaining, match.unfilled;
           amount_taken := amount_remaining;
           amount_remaining := amount_remaining - amount_taken;
           WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, amount) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
@@ -73,7 +73,7 @@ BEGIN
 	    RAISE NOTICE '  order complete';
 	  END IF;
         ELSE
-          RAISE NOTICE '  amount_remaining % > match.unfilled % = this offer is NOT completely filled by this order', amount_remaining, match.unfilled;
+          RAISE NOTICE '  amount_remaining % >= match.unfilled % = this offer is NOT completely filled by this order', amount_remaining, match.unfilled;
           amount_taken := match.unfilled;
           amount_remaining := amount_remaining - amount_taken;
           WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, amount) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
