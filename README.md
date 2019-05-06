@@ -1,7 +1,6 @@
 # order-matching-engine
 
-This order matching engine is implemented within PostgreSQL as stored procedutes. Database migrations are
-handled by `db-migrate` and `tape` is used for tests.
+This order matching engine is an exchange implemented within PostgreSQL as stored procedutes. Database migrations are handled by `db-migrate` and `tape` is used for tests.
 
 This project is in its *early stages*.
 
