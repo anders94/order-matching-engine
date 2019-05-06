@@ -16,8 +16,8 @@ CREATE OR REPLACE FUNCTION match_limit_order(_user_id UUID, _market_id UUID, _si
 AS $$
 DECLARE
   match RECORD;
-  remaining NUMERIC(32, 16);
   amount_taken NUMERIC(32, 16);
+  amount_remaining NUMERIC(32, 16);
 BEGIN
   CREATE TEMPORARY TABLE tmp_fills (
     fill_id UUID,
@@ -31,65 +31,65 @@ BEGIN
     amount NUMERIC(32, 16)
   ) ON COMMIT DROP;
   RAISE NOTICE 'starting limit order';
-  remaining := _amount;
+  amount_remaining := _amount;
+
   -- take any offers that cross
   IF _side = 'buy' THEN
     FOR match IN SELECT * FROM offers WHERE side = 'sell' AND price <= _price AND active = TRUE ORDER BY price ASC, created ASC LOOP
       RAISE NOTICE 'Found sell match %', match;
-      IF remaining > 0 THEN
-        IF remaining < match.unfilled THEN
-          RAISE NOTICE '  remaining % < match.unfilled % = this offer is NOT completely filled by this order', remaining, match.unfilled;
-          amount_taken := remaining;
-          remaining := remaining - amount_taken;
+      IF amount_remaining > 0 THEN
+        IF amount_remaining < match.unfilled THEN
+          RAISE NOTICE '  amount_remaining % < match.unfilled % = this offer is NOT completely filled by this order', amount_remaining, match.unfilled;
+          amount_taken := amount_remaining;
+          amount_remaining := amount_remaining - amount_taken;
           WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, amount) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
           UPDATE offers SET unfilled = unfilled - amount_taken WHERE id = match.id;
-	  IF remaining = 0 THEN
+	  IF amount_remaining = 0 THEN
 	    RAISE NOTICE '  order complete';
 	  END IF;
         ELSE
-          RAISE NOTICE '  remaining % >= match.unfilled % = this offer is completely filled by this order', remaining, match.unfilled;
+          RAISE NOTICE '  amount_remaining % >= match.unfilled % = this offer is completely filled by this order', amount_remaining, match.unfilled;
           amount_taken := match.unfilled;
-          remaining := remaining - amount_taken;
+          amount_remaining := amount_remaining - amount_taken;
           WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, amount) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
           UPDATE offers SET unfilled = unfilled - amount_taken, active = FALSE WHERE id = match.id;
-          IF remaining = 0 THEN
+          IF amount_remaining = 0 THEN
             RAISE NOTICE '  order complete';
           END IF;
         END IF;
-      END IF; -- if remaining > 0
+      END IF; -- if amount_remaining > 0
     END LOOP;
   ELSE -- side is 'sell'
     FOR match IN SELECT * FROM offers WHERE side = 'buy' AND price >= _price AND active = TRUE ORDER BY price DESC, created ASC LOOP
       RAISE NOTICE 'Found buy match %', match;
-      IF remaining > 0 THEN
-        IF remaining <= match.unfilled THEN
-          RAISE NOTICE '  remaining % < match.unfilled % = this offer isnt completely filled by this order', remaining, match.unfilled;
-          amount_taken := remaining;
-          remaining := remaining - amount_taken;
+      IF amount_remaining > 0 THEN
+        IF amount_remaining <= match.unfilled THEN
+          RAISE NOTICE '  amount_remaining % <= match.unfilled % = this offer isnt completely filled by this order', amount_remaining, match.unfilled;
+          amount_taken := amount_remaining;
+          amount_remaining := amount_remaining - amount_taken;
           WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, amount) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
           UPDATE offers SET unfilled = unfilled - amount_taken WHERE id = match.id;
-	  IF remaining = 0 THEN
+	  IF amount_remaining = 0 THEN
 	    RAISE NOTICE '  order complete';
 	  END IF;
         ELSE
-          RAISE NOTICE '  remaining % >= match.unfilled % = this offer is NOT completely filled by this order', remaining, match.unfilled;
+          RAISE NOTICE '  amount_remaining % > match.unfilled % = this offer is NOT completely filled by this order', amount_remaining, match.unfilled;
           amount_taken := match.unfilled;
-          remaining := remaining - amount_taken;
+          amount_remaining := amount_remaining - amount_taken;
           WITH fill AS (INSERT INTO fills (market_id, offer_id, maker_user_id, taker_user_id, price, amount) VALUES (_market_id, match.id, match.user_id, _user_id, match.price, amount_taken) RETURNING id, match.price, amount_taken) INSERT INTO tmp_fills SELECT * FROM fill;
           UPDATE offers SET unfilled = unfilled - amount_taken, active = FALSE WHERE id = match.id;
-          IF remaining = 0 THEN
+          IF amount_remaining = 0 THEN
             RAISE NOTICE '  order complete';
           END IF;
         END IF;
-
-      END IF; -- if remaining > 0
+      END IF; -- if amount_remaining > 0
     END LOOP;
   END IF;
 
   -- create an offer for whatever remains
-  IF remaining > 0 THEN
-    RAISE NOTICE 'INSERT INTO offers (user_id, market_id, side, price, amount) VALUES (%, %, %, %, %);', _user_id, _market_id, _side, _price, remaining;
-    WITH offer AS (INSERT INTO offers (user_id, market_id, side, price, amount) VALUES (_user_id, _market_id, _side, _price, remaining) RETURNING id, side, price, amount) INSERT INTO tmp_offer SELECT * FROM offer;
+  IF amount_remaining > 0 THEN
+    RAISE NOTICE 'INSERT INTO offers (user_id, market_id, side, price, amount) VALUES (%, %, %, %, %);', _user_id, _market_id, _side, _price, amount_remaining;
+    WITH offer AS (INSERT INTO offers (user_id, market_id, side, price, amount) VALUES (_user_id, _market_id, _side, _price, amount_remaining) RETURNING id, side, price, amount) INSERT INTO tmp_offer SELECT * FROM offer;
   END IF;
 
   -- return results

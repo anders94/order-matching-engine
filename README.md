@@ -104,7 +104,7 @@ Submit a limit order to buy 0.5 BTC at $5010.00:
 ome_dev=# SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'buy', 5010.0, 0.5, 'fills', 'offer');
 NOTICE:  starting limit order
 NOTICE:  Found sell match (be53e94f-3aad-4955-8c4f-a0e21e5cc7f6,"2019-05-03 19:11:42.53733",e3fd6060-1de2-4ada-81e1-3ac538bb6a65,9b4719da-1bf3-4540-803d-e3d771793a3e,sell,5001.0000000000000000,0.8160000000000000,0.8160000000000000,t)
-NOTICE:    remaining 0.5000000000000000 < match.unfilled 0.8160000000000000 = this offer is NOT completely filled by this order
+NOTICE:    amount_remaining 0.5000000000000000 < match.unfilled 0.8160000000000000 = this offer is NOT completely filled by this order
 NOTICE:    order complete
 NOTICE:  Found sell match (944fc03d-3dd7-49f6-9fca-585892c39b67,"2019-05-03 19:11:42.53733",f93b0c98-0d7b-4606-837f-9fb0a6503674,9b4719da-1bf3-4540-803d-e3d771793a3e,sell,5005.0000000000000000,1.3750000000000000,1.3750000000000000,t)
 NOTICE:  Found sell match (08bcc46f-fb53-4c3d-8590-bff854fd37cc,"2019-05-03 19:11:42.53733",f93b0c98-0d7b-4606-837f-9fb0a6503674,9b4719da-1bf3-4540-803d-e3d771793a3e,sell,5010.0000000000000000,0.9230000000000000,0.9230000000000000,t)
@@ -142,11 +142,11 @@ Submit a limit order to sell 2.5 BTC at $4993.00:
 ome_dev=# SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'sell', 4993.0, 2.5, 'fills', 'offer');
 NOTICE:  starting limit order
 NOTICE:  Found buy match (9aa784a7-9c2a-4e47-915c-414dc5ef94ba,"2019-05-03 19:11:42.53733",25c8a195-7936-4ac2-9d17-39348210dc87,9b4719da-1bf3-4540-803d-e3d771793a3e,buy,4999.5000000000000000,1.1210000000000000,1.1210000000000000,t)
-NOTICE:    remaining 2.5000000000000000 >= match.filled 1.1210000000000000 = this offer is NOT completely filled by this order
+NOTICE:    amount_remaining 2.5000000000000000 >= match.filled 1.1210000000000000 = this offer is NOT completely filled by this order
 NOTICE:  Found buy match (f846ef7a-4cda-4395-bd50-52382269591d,"2019-05-03 19:11:42.53733",047747c9-307d-47c6-9f99-07a3598e238b,9b4719da-1bf3-4540-803d-e3d771793a3e,buy,4995.0000000000000000,0.9020000000000000,0.9020000000000000,t)
-NOTICE:    remaining 1.3790000000000000 >= match.filled 0.9020000000000000 = this offer is NOT completely filled by this order
+NOTICE:    amount_remaining 1.3790000000000000 >= match.filled 0.9020000000000000 = this offer is NOT completely filled by this order
 NOTICE:  Found buy match (2be31a29-5f47-48b1-bd0e-e152c72db6de,"2019-05-03 19:11:42.53733",25c8a195-7936-4ac2-9d17-39348210dc87,9b4719da-1bf3-4540-803d-e3d771793a3e,buy,4995.0000000000000000,0.2830000000000000,0.2830000000000000,t)
-NOTICE:    remaining 0.4770000000000000 >= match.filled 0.2830000000000000 = this offer is NOT completely filled by this order
+NOTICE:    amount_remaining 0.4770000000000000 >= match.filled 0.2830000000000000 = this offer is NOT completely filled by this order
 NOTICE:  INSERT INTO offers (user_id, market_id, side, price, amount) VALUES (047747c9-307d-47c6-9f99-07a3598e238b, 9b4719da-1bf3-4540-803d-e3d771793a3e, sell, 4993.0, 0.1940000000000000);
  match_limit_order 
 -------------------
@@ -194,11 +194,11 @@ BEGIN
 ome_dev=# SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'buy', 5010.0, 5.0, 'fills', 'offer');
 NOTICE:  starting limit order
 NOTICE:  Found sell match (3cf62411-8440-4591-aafa-b0ea9231f972,"2019-05-05 07:16:49.145293",bd8e7731-3b11-4a84-a92f-19a47bdf251d,b14ee127-161c-4e92-8942-ba73394f05ef,sell,5001.0000000000000000,0.8160000000000000,0.8160000000000000,t)
-NOTICE:    remaining 5.0000000000000000 >= match.filled 0.8160000000000000 = this offer is completely filled by this order
+NOTICE:    amount_remaining 5.0000000000000000 >= match.filled 0.8160000000000000 = this offer is completely filled by this order
 NOTICE:  Found sell match (ffde512f-b3d1-4953-aa7c-9be10866c17a,"2019-05-05 07:16:49.145293",e7c2f9bb-fd0c-440d-a237-15c502177add,b14ee127-161c-4e92-8942-ba73394f05ef,sell,5005.0000000000000000,1.3750000000000000,1.3750000000000000,t)
-NOTICE:    remaining 4.1840000000000000 >= match.filled 1.3750000000000000 = this offer is completely filled by this order
+NOTICE:    amount_remaining 4.1840000000000000 >= match.filled 1.3750000000000000 = this offer is completely filled by this order
 NOTICE:  Found sell match (0027f128-73e0-4d3a-81f4-091d8b6b06f9,"2019-05-05 07:16:49.145293",e7c2f9bb-fd0c-440d-a237-15c502177add,b14ee127-161c-4e92-8942-ba73394f05ef,sell,5010.0000000000000000,0.9230000000000000,0.9230000000000000,t)
-NOTICE:    remaining 2.8090000000000000 >= match.filled 0.9230000000000000 = this offer is completely filled by this order
+NOTICE:    amount_remaining 2.8090000000000000 >= match.filled 0.9230000000000000 = this offer is completely filled by this order
 NOTICE:  INSERT INTO offers (user_id, market_id, side, price, amount) VALUES (394d8efa-10da-45cf-ae76-e7bc75bcd772, b14ee127-161c-4e92-8942-ba73394f05ef, buy, 5010.0, 1.8860000000000000);
  match_limit_order 
 -------------------
