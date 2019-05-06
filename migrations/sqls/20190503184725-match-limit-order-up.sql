@@ -46,7 +46,8 @@ BEGIN
           UPDATE offers SET unfilled = unfilled - amount_taken WHERE id = match.id;
 	  IF amount_remaining = 0 THEN
 	    RAISE NOTICE '  order complete';
-	  END IF;
+            EXIT; -- exit loop
+          END IF;
         ELSE
           RAISE NOTICE '  amount_remaining % >= match.unfilled % = this offer is completely filled by this order', amount_remaining, match.unfilled;
           amount_taken := match.unfilled;
@@ -55,6 +56,7 @@ BEGIN
           UPDATE offers SET unfilled = unfilled - amount_taken, active = FALSE WHERE id = match.id;
           IF amount_remaining = 0 THEN
             RAISE NOTICE '  order complete';
+            EXIT; -- exit loop
           END IF;
         END IF;
       END IF; -- if amount_remaining > 0
@@ -71,6 +73,7 @@ BEGIN
           UPDATE offers SET unfilled = unfilled - amount_taken WHERE id = match.id;
 	  IF amount_remaining = 0 THEN
 	    RAISE NOTICE '  order complete';
+            EXIT; -- exit loop
 	  END IF;
         ELSE
           RAISE NOTICE '  amount_remaining % >= match.unfilled % = this offer is NOT completely filled by this order', amount_remaining, match.unfilled;
@@ -80,6 +83,7 @@ BEGIN
           UPDATE offers SET unfilled = unfilled - amount_taken, active = FALSE WHERE id = match.id;
           IF amount_remaining = 0 THEN
             RAISE NOTICE '  order complete';
+            EXIT; -- exit loop
           END IF;
         END IF;
       END IF; -- if amount_remaining > 0
