@@ -67,7 +67,7 @@ CREATE TABLE offers (
   active             BOOLEAN         NOT NULL DEFAULT TRUE
 ) WITH (OIDS=FALSE);
 
-CREATE INDEX idx_offers_market_id_side_price ON offers USING btree (market_id, side, price);
+CREATE INDEX idx_offers_market_id_side_price_active ON offers USING btree (market_id, side, price, active);
 
 -- --------------------------------------------------------
 -- -- Table: Fills
