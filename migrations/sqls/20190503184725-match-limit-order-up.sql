@@ -35,7 +35,7 @@ BEGIN
 
   -- take any offers that cross
   IF _side = 'buy' THEN
-    FOR match IN SELECT * FROM offers WHERE side = 'sell' AND price <= _price AND active = TRUE ORDER BY price ASC, created ASC LOOP
+    FOR match IN SELECT * FROM offers WHERE market_id = _market_id AND side = 'sell' AND price <= _price AND active = TRUE ORDER BY price ASC, created ASC LOOP
       -- RAISE NOTICE 'Found sell match %', match;
       IF amount_remaining > 0 THEN
         IF amount_remaining < match.unfilled THEN
@@ -62,7 +62,7 @@ BEGIN
       END IF; -- if amount_remaining > 0
     END LOOP;
   ELSE -- side is 'sell'
-    FOR match IN SELECT * FROM offers WHERE side = 'buy' AND price >= _price AND active = TRUE ORDER BY price DESC, created ASC LOOP
+    FOR match IN SELECT * FROM offers WHERE market_id = _market_id AND side = 'buy' AND price >= _price AND active = TRUE ORDER BY price DESC, created ASC LOOP
       -- RAISE NOTICE 'Found buy match %', match;
       IF amount_remaining > 0 THEN
         IF amount_remaining < match.unfilled THEN
