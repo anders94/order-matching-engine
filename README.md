@@ -6,7 +6,11 @@ This project is in its *early stages*.
 
 ## Why?
 
-Isn't an in-memory matching engine going to be faster? Probably, but there are other tradeoffs. Initially I simply wanted to see if this was possible. It turns out it is not only possible but fairly robust and, critically, a much simpler architecture. That’s mostly because everything that is easiest implemented as a singleton is implemented in the database. This design allows order submissions from a number of connected clients while guaranteeing time ordered transactions and transactional integrity.
+Isn't an in-memory matching engine going to be faster? Absolutely, but there are other tradeoffs. Initially I simply wanted to see if this was possible. It turns out it is not only possible but fairly robust and, critically, a much simpler architecture. On failure, you can get back to the latest state simply by replaying the transaction log. There is no ambiguity about differing flavors of matching application logic on multiple servers because the database only has one. This design guarentees transactional integrity while keeping critical infrastructure simple and easily recoverable.
+
+## Performance
+
+Commodity hardware (2.9 GHz Core i5) with over 25k offers supports roughly 200 transactions per second.
 
 ## Prerequisites
 
