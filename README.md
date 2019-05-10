@@ -1,12 +1,12 @@
 # order-matching-engine
 
-This order matching engine is an exchange implemented within PostgreSQL as stored procedutes. Database migrations are handled by `db-migrate` and `tape` is used for tests.
+This order matching engine is an exchange implemented within PostgreSQL as functions. Database migrations are handled by `db-migrate` and `tape` is used for tests.
 
 This project is in its *early stages*.
 
 ## Why?
 
-Isn't an in-memory matching engine going to be faster? Absolutely, but there are other tradeoffs. Initially I simply wanted to see if this was possible. It turns out it is not only possible but fairly robust and, critically, a much simpler architecture. On failure, you can get back to the latest state simply by replaying the transaction log. There is no ambiguity about differing flavors of matching application logic on multiple servers because the database only has one. This design guarentees transactional integrity while keeping critical infrastructure simple and easily recoverable.
+Isn't an in-memory matching engine going to be faster? Absolutely, but there are other tradeoffs. Initially I simply wanted to see if this was possible. It turns out it is not only possible but fairly robust and, critically, a much simpler architecture. On failure, you can get back to the latest state simply by replaying the transaction log. There is no ambiguity about differing flavors of matching application logic on multiple servers because the database has only one. This design guarentees transactional integrity while keeping critical infrastructure simple and easily recoverable.
 
 ## Performance
 
