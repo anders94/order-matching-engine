@@ -38,7 +38,7 @@ Edit `database.json` to taste.
 
 Set environment variables for passwords you intend to use: (it might be handy to keep this in a file you source - git will ignore a file called `environment`)
 ```
-export ADMIN_PASSWORD="super-secret-password"` # this password is only used in the next step to create the databases
+export ADMIN_PASSWORD="super-secret-password" # this password is only used in the next step to create the databases
 export DEV_PASSWORD="super-secret-password"
 export TEST_PASSWORD="super-secret-password"
 export PROD_PASSWORD="super-secret-password"
@@ -57,6 +57,11 @@ db-migrate up
 ```
 
 ## Test
+
+Create the test schema:
+```
+db-migrate up -e test
+```
 
 Run the tests:
 ```
