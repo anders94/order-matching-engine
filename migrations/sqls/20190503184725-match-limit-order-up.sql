@@ -3,11 +3,11 @@
 -- match_limit_order
 --
 -- Matches a limit order against offers in the book. Example usage:
--- SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'buy', 5010.0, 0.5, 'fills', 'offer');
--- SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'sell', 4993.0, 0.5, 'fills', 'offer');
+-- SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'buy', 5010000000, 50000000, 'fills', 'offer');
+-- SELECT match_limit_order((SELECT id FROM users WHERE email = 'user-a@example.com' AND obsolete = FALSE), (SELECT id FROM markets WHERE base_symbol = 'BTC' AND quote_symbol = 'USD' AND obsolete = FALSE), 'sell', 4993000000, 50000000, 'fills', 'offer');
 --
--- Notes: Currently lots of copied code in this and no tests yet.
--- Cursors containing resulting fills and order are not yet implemented.
+-- Notes: Price and amount must be integers (scale=0). Amount must be a multiple of the market's lot_size.
+-- Example: For BTC/USD with lot_size=100000000 (1 BTC), price is in micro-USD per BTC, amount is in satoshis.
 -------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION match_limit_order(_user_id UUID, _market_id UUID, _side buy_sell, _price NUMERIC, _amount NUMERIC, _fills REFCURSOR, _offer REFCURSOR)
@@ -16,19 +16,35 @@ CREATE OR REPLACE FUNCTION match_limit_order(_user_id UUID, _market_id UUID, _si
 AS $$
 DECLARE
   match RECORD;
-  amount_taken NUMERIC(32, 16);
-  amount_remaining NUMERIC(32, 16);
+  amount_taken NUMERIC;
+  amount_remaining NUMERIC;
+  lot_size NUMERIC;
 BEGIN
+  -- Validate inputs are integers
+  IF scale(_price) != 0 OR scale(_amount) != 0 THEN
+    RAISE EXCEPTION 'Price and amount must be integers (scale=0)';
+  END IF;
+
+  -- Fetch market's lot_size
+  SELECT m.lot_size INTO lot_size
+  FROM markets m
+  WHERE m.id = _market_id;
+
+  -- Validate amount is multiple of lot_size
+  IF _amount % lot_size != 0 THEN
+    RAISE EXCEPTION 'Amount must be a multiple of lot_size (%)' , lot_size;
+  END IF;
+
   CREATE TEMPORARY TABLE tmp_fills (
     fill_id UUID,
-    price NUMERIC(32, 16),
-    amount NUMERIC(32, 16)
+    price NUMERIC,
+    amount NUMERIC
   ) ON COMMIT DROP;
   CREATE TEMPORARY TABLE tmp_offer (
     offer_id UUID,
     side buy_sell,
-    price NUMERIC(32, 16),
-    amount NUMERIC(32, 16)
+    price NUMERIC,
+    amount NUMERIC
   ) ON COMMIT DROP;
 
   amount_remaining := _amount;

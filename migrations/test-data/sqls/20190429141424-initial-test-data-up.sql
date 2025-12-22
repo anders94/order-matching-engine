@@ -11,30 +11,32 @@ VALUES
 -- add assets
 
 INSERT INTO assets
-  (symbol, significant_digits, attributes)
+  (symbol, base_unit_scale, attributes)
 VALUES
-  ('USD', 2, '{"description": "United States Dollar"}'::JSON),
-  ('BTC', 8, '{"description": "Bitcoin"}'::JSON),
-  ('ETH', 16, '{"description": "Ethereum"}'::JSON);
+  ('USD', 1000000, '{"description": "USDC with 6 decimals"}'::JSON),
+  ('BTC', 100000000, '{"description": "Bitcoin with 8 decimals"}'::JSON),
+  ('ETH', 1000000000000000000, '{"description": "Ethereum with 18 decimals"}'::JSON);
 
 -- add some markets
 
 INSERT INTO markets
-  (base_symbol, quote_symbol)
+  (base_symbol, quote_symbol, lot_size)
 VALUES
-  ('BTC', 'USD'),
-  ('ETH', 'USD');
+  ('BTC', 'USD', 100000000),
+  ('ETH', 'USD', 1000000000000000000);
 
 -- add a bunch of offers
+-- Note: prices are in micro-USD per BTC (USD base_unit_scale = 1000000)
+--       amounts are in satoshis (BTC base_unit_scale = 100000000)
 
 INSERT INTO offers
   (user_id, market_id, side, price, amount)
 VALUES
-  ((SELECT id FROM users WHERE email='user-a@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'buy', 4990.0, 1.213),
-  ((SELECT id FROM users WHERE email='user-a@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'buy', 4995.0, 0.902),
-  ((SELECT id FROM users WHERE email='user-b@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'buy', 4995.0, 0.283),
-  ((SELECT id FROM users WHERE email='user-b@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'buy', 4999.5, 1.121),
+  ((SELECT id FROM users WHERE email='user-a@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'buy', 4990000000, 121300000),
+  ((SELECT id FROM users WHERE email='user-a@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'buy', 4995000000, 90200000),
+  ((SELECT id FROM users WHERE email='user-b@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'buy', 4995000000, 28300000),
+  ((SELECT id FROM users WHERE email='user-b@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'buy', 4999500000, 112100000),
 
-  ((SELECT id FROM users WHERE email='user-c@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'sell', 5001.0, 0.816),
-  ((SELECT id FROM users WHERE email='user-d@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'sell', 5005.0, 1.375),
-  ((SELECT id FROM users WHERE email='user-d@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'sell', 5010.0, 0.923);
+  ((SELECT id FROM users WHERE email='user-c@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'sell', 5001000000, 81600000),
+  ((SELECT id FROM users WHERE email='user-d@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'sell', 5005000000, 137500000),
+  ((SELECT id FROM users WHERE email='user-d@example.com'), (SELECT id FROM markets WHERE base_symbol='BTC' and quote_symbol='USD'), 'sell', 5010000000, 92300000);

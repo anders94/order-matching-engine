@@ -27,7 +27,7 @@ CREATE INDEX idx_users_email ON users USING btree (email);
 CREATE TABLE assets (
   symbol             VARCHAR(8)      NOT NULL,
   created            TIMESTAMP       NOT NULL DEFAULT now(),
-  significant_digits INT             NOT NULL,
+  base_unit_scale    NUMERIC         NOT NULL CHECK (base_unit_scale > 0 AND scale(base_unit_scale) = 0),
   attributes         JSON            NOT NULL DEFAULT '{}'::JSON,
   obsolete           BOOLEAN         NOT NULL DEFAULT FALSE,
   CONSTRAINT pk_assets_symbol PRIMARY KEY (symbol)
@@ -44,6 +44,7 @@ CREATE TABLE markets (
   created            TIMESTAMP       NOT NULL DEFAULT now(),
   base_symbol        VARCHAR(8)      NOT NULL REFERENCES assets(symbol) ON DELETE RESTRICT,
   quote_symbol       VARCHAR(8)      NOT NULL REFERENCES assets(symbol) ON DELETE RESTRICT,
+  lot_size           NUMERIC         NOT NULL CHECK (lot_size > 0 AND scale(lot_size) = 0),
   attributes         JSON            NOT NULL DEFAULT '{}'::JSON,
   obsolete           BOOLEAN         NOT NULL DEFAULT FALSE,
   CONSTRAINT pk_markets_base_symbol_quote_symbol PRIMARY KEY (base_symbol, quote_symbol)
@@ -61,9 +62,9 @@ CREATE TABLE offers (
   user_id            UUID            NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   market_id          UUID            NOT NULL REFERENCES markets(id) ON DELETE RESTRICT,
   side               buy_sell        NOT NULL,
-  price              NUMERIC(32, 16) NOT NULL CHECK (price > 0),
-  amount             NUMERIC(32, 16) NOT NULL CHECK (amount > 0),
-  unfilled           NUMERIC(32, 16) NOT NULL CHECK (unfilled <= amount),
+  price              NUMERIC         NOT NULL CHECK (price > 0 AND scale(price) = 0),
+  amount             NUMERIC         NOT NULL CHECK (amount > 0 AND scale(amount) = 0),
+  unfilled           NUMERIC         NOT NULL CHECK (unfilled >= 0 AND unfilled <= amount AND scale(unfilled) = 0),
   active             BOOLEAN         NOT NULL DEFAULT TRUE
 ) WITH (OIDS=FALSE);
 
@@ -87,10 +88,10 @@ CREATE TABLE fills (
   offer_id           UUID            NOT NULL REFERENCES offers(id) ON DELETE RESTRICT,
   maker_user_id      UUID            NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   taker_user_id      UUID            NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-  price              NUMERIC(32, 16) NOT NULL CHECK (price > 0),
-  amount             NUMERIC(32, 16) NOT NULL CHECK (amount > 0),
-  maker_fee          NUMERIC(32, 16) NOT NULL DEFAULT 0.0,
-  taker_fee          NUMERIC(32, 16) NOT NULL DEFAULT 0.0
+  price              NUMERIC         NOT NULL CHECK (price > 0 AND scale(price) = 0),
+  amount             NUMERIC         NOT NULL CHECK (amount > 0 AND scale(amount) = 0),
+  maker_fee          NUMERIC         NOT NULL DEFAULT 0 CHECK (maker_fee >= 0 AND scale(maker_fee) = 0),
+  taker_fee          NUMERIC         NOT NULL DEFAULT 0 CHECK (taker_fee >= 0 AND scale(taker_fee) = 0)
 ) WITH (OIDS=FALSE);
 
 CREATE INDEX idx_offers_market_id_created_maker_user_id_taker_user_id ON fills USING btree (market_id, created, maker_user_id, taker_user_id);
