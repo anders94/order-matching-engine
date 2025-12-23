@@ -1,8 +1,7 @@
 {
   "name": "order-matching-engine",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "An order matching engine implemented as PostgreSQL stored procedures.",
-  "main": "app.js",
   "scripts": {
     "test": "node test"
   },
@@ -24,8 +23,11 @@
   "homepage": "https://github.com/anders94/order-matching-engine#readme",
   "dependencies": {
     "async": "^2.6.4",
-    "db-migrate": "^0.11.9",
-    "db-migrate-pg": "^0.5.1",
+    "db-migrate": "^0.11.14",
+    "db-migrate-pg": "^1.5.2",
     "tape": "^4.13.2"
+  },
+  "devDependencies": {
+    "pg": "^8.16.3"
   }
 }
