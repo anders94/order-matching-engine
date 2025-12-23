@@ -27,6 +27,28 @@ The API will start on port 3000 by default (configurable via `PORT` environment 
 
 ## API Endpoints
 
+### Users
+
+#### GET /api/v1/users
+List all active users.
+
+**Response:**
+```json
+{
+  "success": true,
+  "users": [
+    {
+      "id": "uuid",
+      "email": "user@example.com",
+      "created": "2019-05-03T19:11:42.537Z"
+    }
+  ]
+}
+```
+
+#### GET /api/v1/users/:userId
+Get a specific user by ID.
+
 ### Markets
 
 #### GET /api/v1/markets
