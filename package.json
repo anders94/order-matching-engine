@@ -3,7 +3,9 @@
   "version": "0.0.2",
   "description": "An order matching engine implemented as PostgreSQL stored procedures.",
   "scripts": {
-    "test": "node test"
+    "test": "node test",
+    "api": "node api/src/server.js",
+    "api:dev": "NODE_ENV=development node api/src/server.js"
   },
   "repository": {
     "type": "git",
@@ -25,9 +27,8 @@
     "async": "^2.6.4",
     "db-migrate": "^0.11.14",
     "db-migrate-pg": "^1.5.2",
+    "express": "^5.2.1",
+    "pg": "^8.16.3",
     "tape": "^4.13.2"
-  },
-  "devDependencies": {
-    "pg": "^8.16.3"
   }
 }
