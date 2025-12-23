@@ -115,14 +115,42 @@ async.series([
 	});
     },
     function(cb) {
-	test('Should not be able to INSERT crossd offers', function (t) {
-	    client.query('INSERT INTO offers (user_id, market_id, side, price, amount) VALUES ((SELECT id FROM users WHERE email=$1), (SELECT id FROM markets WHERE base_symbol=$2 and quote_symbol=$3), $4, $5, $6);', ['user-a@example.com', 'BTC', 'USD', 'sell', 2000.0, 1.0], (err, res) => {
+	test('Should not be able to INSERT crossed offers', function (t) {
+	    client.query('INSERT INTO offers (user_id, market_id, side, price, amount) VALUES ((SELECT id FROM users WHERE email=$1), (SELECT id FROM markets WHERE base_symbol=$2 and quote_symbol=$3), $4, $5, $6);', ['user-a@example.com', 'BTC', 'USD', 'sell', 2000000000, 100000000], (err, res) => {
 		t.equal('P0001', err.code);
-		client.query('INSERT INTO offers (user_id, market_id, side, price, amount) VALUES ((SELECT id FROM users WHERE email=$1), (SELECT id FROM markets WHERE base_symbol=$2 and quote_symbol=$3), $4, $5, $6);', ['user-a@example.com', 'BTC', 'USD', 'buy', 6000.0, 1.0], (err, res) => {
+		client.query('INSERT INTO offers (user_id, market_id, side, price, amount) VALUES ((SELECT id FROM users WHERE email=$1), (SELECT id FROM markets WHERE base_symbol=$2 and quote_symbol=$3), $4, $5, $6);', ['user-a@example.com', 'BTC', 'USD', 'buy', 6000000000, 100000000], (err, res) => {
 		    t.equal('P0001', err.code);
 		    t.end();
 		    cb();
 		});
+	    });
+	});
+    },
+    function(cb) {
+	test('Should reject offers with decimal prices', function (t) {
+	    client.query('INSERT INTO offers (user_id, market_id, side, price, amount) VALUES ((SELECT id FROM users WHERE email=$1), (SELECT id FROM markets WHERE base_symbol=$2 and quote_symbol=$3), $4, $5, $6);', ['user-a@example.com', 'BTC', 'USD', 'buy', 5000.5, 100000000], (err, res) => {
+		t.equal('23514', err.code); // check constraint violation
+		t.end();
+		cb();
+	    });
+	});
+    },
+    function(cb) {
+	test('Should reject offers with decimal amounts', function (t) {
+	    client.query('INSERT INTO offers (user_id, market_id, side, price, amount) VALUES ((SELECT id FROM users WHERE email=$1), (SELECT id FROM markets WHERE base_symbol=$2 and quote_symbol=$3), $4, $5, $6);', ['user-a@example.com', 'BTC', 'USD', 'buy', 5000000000, 100000000.5], (err, res) => {
+		t.equal('23514', err.code); // check constraint violation
+		t.end();
+		cb();
+	    });
+	});
+    },
+    function(cb) {
+	test('Should reject match_limit_order with amount not divisible by lot_size', function (t) {
+	    client.query('SELECT match_limit_order((SELECT id FROM users WHERE email = $1), (SELECT id FROM markets WHERE base_symbol = $2 AND quote_symbol = $3), $4, $5, $6, $7, $8);', ['user-a@example.com', 'BTC', 'USD', 'buy', 5000000000, 12345678, 'fills', 'offer'], (err, res) => {
+		t.ok(err);
+		t.ok(err.message.includes('multiple of lot_size'));
+		t.end();
+		cb();
 	    });
 	});
     },
