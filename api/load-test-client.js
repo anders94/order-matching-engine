@@ -198,11 +198,25 @@ async function runLoadTest(userId, marketId) {
   let tradeCount = 0;
   let fillCount = 0;
   let totalFilled = 0;
+  let orderBook = null;
+  let orderBookFetchCount = 0;
+
+  // Fetch order book initially
+  try {
+    orderBook = await getOrderBook(marketId);
+    orderBookFetchCount++;
+  } catch (err) {
+    console.error('Error fetching initial order book:', err.message);
+    return;
+  }
 
   while (true) {
     try {
-      // Get order book
-      const orderBook = await getOrderBook(marketId);
+      // Refetch order book every 10 trades
+      if (tradeCount > 0 && tradeCount % 10 === 0) {
+        orderBook = await getOrderBook(marketId);
+        orderBookFetchCount++;
+      }
 
       // Generate trade
       const trade = generateTrade(orderBook);
@@ -227,14 +241,17 @@ async function runLoadTest(userId, marketId) {
         // Print single line summary
         const status = fills > 0 ? 'FILLED' : 'POSTED';
         const fillInfo = fills > 0 ? `${fills}x fills, ${filled.toFixed(8)} filled` : `${offered.toFixed(8)} posted`;
+        const bookIndicator = (tradeCount % 10 === 0) ? ' [BOOK]' : '';
         console.log(
           `[${tradeCount}] ${status} ${trade.side.toUpperCase()} ${trade.amount.toFixed(8)} @ ${formatNumber(trade.price)} | ` +
-          `${fillInfo} | ${duration}ms | fills: ${fillCount}/${tradeCount} (${((fillCount/tradeCount)*100).toFixed(1)}%)`
+          `${fillInfo} | ${duration}ms | fills: ${fillCount}/${tradeCount} (${((fillCount/tradeCount)*100).toFixed(1)}%)${bookIndicator}`
         );
       } else {
+        // Show detailed error information
+        const errorDetail = result.details ? ` (${result.details})` : '';
         console.log(
           `[${tradeCount}] ERROR ${trade.side.toUpperCase()} ${trade.amount.toFixed(8)} @ ${formatNumber(trade.price)} | ` +
-          `${result.error} | ${duration}ms`
+          `${result.error}${errorDetail} | ${duration}ms`
         );
       }
 
@@ -249,25 +266,206 @@ async function runLoadTest(userId, marketId) {
 }
 
 /**
+ * Run parallel load testing
+ */
+async function runParallelLoadTest(userId, marketId, parallelCount) {
+  console.log(`Starting parallel load test with ${parallelCount} concurrent workers`);
+  console.log(`User: ${userId}, Market: ${marketId}`);
+  console.log('Press Ctrl+C to stop\n');
+
+  // Shared statistics
+  const stats = {
+    totalOrders: 0,
+    totalFills: 0,
+    totalFilled: 0,
+    totalLatency: 0,
+    prices: [],
+    errors: 0,
+    lastErrors: [],
+    intervalOrders: 0,
+    intervalFills: 0,
+    intervalLatency: 0,
+    intervalPrices: [],
+    startTime: Date.now(),
+  };
+
+  let running = true;
+
+  // Handle Ctrl+C
+  process.on('SIGINT', () => {
+    running = false;
+    console.log('\n\nStopping...\n');
+  });
+
+  // Fetch order book once
+  let orderBook;
+  try {
+    orderBook = await getOrderBook(marketId);
+  } catch (err) {
+    console.error('Error fetching order book:', err.message);
+    return;
+  }
+
+  // Worker function
+  async function worker(workerId) {
+    let workerTrades = 0;
+
+    while (running) {
+      try {
+        // Refetch order book every 10 trades
+        if (workerTrades > 0 && workerTrades % 10 === 0) {
+          orderBook = await getOrderBook(marketId);
+        }
+
+        // Generate trade
+        const trade = generateTrade(orderBook);
+
+        // Place order
+        const startTime = Date.now();
+        const result = await placeOrder(userId, marketId, trade.side, trade.price, trade.amount);
+        const duration = Date.now() - startTime;
+
+        workerTrades++;
+        stats.totalOrders++;
+        stats.intervalOrders++;
+        stats.totalLatency += duration;
+        stats.intervalLatency += duration;
+        stats.prices.push(trade.price);
+        stats.intervalPrices.push(trade.price);
+
+        if (result.success) {
+          if (result.fills.length > 0) {
+            stats.totalFills++;
+            stats.intervalFills++;
+            stats.totalFilled += result.summary.totalFilled;
+          }
+        } else {
+          stats.errors++;
+          const errorMsg = `[Worker ${workerId}] ERROR: ${result.error}${result.details ? ' (' + result.details + ')' : ''}`;
+          stats.lastErrors.push(errorMsg);
+          console.error(errorMsg);
+        }
+
+        // Small delay
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+      } catch (err) {
+        stats.errors++;
+        const errorMsg = `[Worker ${workerId}] EXCEPTION: ${err.message}`;
+        stats.lastErrors.push(errorMsg);
+        console.error(errorMsg);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+
+  // Start workers
+  const workers = [];
+  for (let i = 0; i < parallelCount; i++) {
+    workers.push(worker(i + 1));
+  }
+
+  // Stats printer
+  const statsInterval = setInterval(() => {
+    if (stats.intervalOrders === 0) {
+      console.log('Waiting for orders...');
+      return;
+    }
+
+    const avgLatency = stats.intervalLatency / stats.intervalOrders;
+    const avgPrice = stats.intervalPrices.reduce((a, b) => a + b, 0) / stats.intervalPrices.length;
+    const fillRate = ((stats.intervalFills / stats.intervalOrders) * 100).toFixed(1);
+    const throughput = (stats.intervalOrders / 5).toFixed(1);
+
+    console.log(
+      `Orders: ${stats.intervalOrders.toString().padStart(4)} | ` +
+      `Fills: ${fillRate.padStart(5)}% | ` +
+      `Avg Price: ${formatNumber(Math.round(avgPrice)).padStart(15)} | ` +
+      `Avg Latency: ${Math.round(avgLatency).toString().padStart(4)}ms | ` +
+      `Throughput: ${throughput.padStart(6)} orders/sec`
+    );
+
+    // Reset interval stats
+    stats.intervalOrders = 0;
+    stats.intervalFills = 0;
+    stats.intervalLatency = 0;
+    stats.intervalPrices = [];
+  }, 5000);
+
+  // Wait for workers or Ctrl+C
+  await Promise.race([
+    Promise.all(workers),
+    new Promise(resolve => {
+      const checkInterval = setInterval(() => {
+        if (!running) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
+    })
+  ]);
+
+  clearInterval(statsInterval);
+
+  // Print final statistics
+  const totalTime = (Date.now() - stats.startTime) / 1000;
+  const avgLatency = stats.totalOrders > 0 ? stats.totalLatency / stats.totalOrders : 0;
+  const avgPrice = stats.prices.length > 0 ? stats.prices.reduce((a, b) => a + b, 0) / stats.prices.length : 0;
+  const fillRate = stats.totalOrders > 0 ? ((stats.totalFills / stats.totalOrders) * 100).toFixed(1) : 0;
+  const throughput = (stats.totalOrders / totalTime).toFixed(1);
+
+  console.log('\n' + '='.repeat(80));
+  console.log('FINAL STATISTICS');
+  console.log('='.repeat(80));
+  console.log(`Total Runtime:        ${totalTime.toFixed(1)}s`);
+  console.log(`Total Orders:         ${stats.totalOrders}`);
+  console.log(`Total Fills:          ${stats.totalFills} (${fillRate}%)`);
+  console.log(`Total Filled Amount:  ${stats.totalFilled.toFixed(8)}`);
+  console.log(`Average Price:        ${formatNumber(Math.round(avgPrice))}`);
+  console.log(`Average Latency:      ${Math.round(avgLatency)}ms`);
+  console.log(`Overall Throughput:   ${throughput} orders/sec`);
+  console.log(`Errors:               ${stats.errors}`);
+  console.log('='.repeat(80));
+}
+
+/**
  * Main
  */
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.length === 0) {
+  // Parse -p parameter
+  let parallelCount = null;
+  let filteredArgs = [];
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '-p' && i + 1 < args.length) {
+      parallelCount = parseInt(args[i + 1]);
+      i++; // Skip the next argument
+    } else {
+      filteredArgs.push(args[i]);
+    }
+  }
+
+  if (filteredArgs.length === 0) {
     // List users
     await listUsers();
-  } else if (args.length === 1) {
+  } else if (filteredArgs.length === 1) {
     // List markets for user
-    await listMarkets(args[0]);
-  } else if (args.length === 2) {
+    await listMarkets(filteredArgs[0]);
+  } else if (filteredArgs.length === 2) {
     // Run load test
-    await runLoadTest(args[0], args[1]);
+    if (parallelCount !== null && parallelCount > 0) {
+      await runParallelLoadTest(filteredArgs[0], filteredArgs[1], parallelCount);
+    } else {
+      await runLoadTest(filteredArgs[0], filteredArgs[1]);
+    }
   } else {
     console.error('Usage:');
-    console.error('  node load-test-client.js                    # List users');
-    console.error('  node load-test-client.js <user-id>          # List markets');
-    console.error('  node load-test-client.js <user-id> <market-id>  # Run load test');
+    console.error('  node load-test-client.js                              # List users');
+    console.error('  node load-test-client.js <user-id>                    # List markets');
+    console.error('  node load-test-client.js <user-id> <market-id>        # Run load test');
+    console.error('  node load-test-client.js -p <N> <user-id> <market-id> # Run with N parallel workers');
     process.exit(1);
   }
 }
