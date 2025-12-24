@@ -312,8 +312,8 @@ async function runParallelLoadTest(userId, marketId, parallelCount) {
 
     while (running) {
       try {
-        // Refetch order book every 10 trades
-        if (workerTrades > 0 && workerTrades % 10 === 0) {
+        // Refetch order book every 3 trades (more frequent in parallel mode)
+        if (workerTrades > 0 && workerTrades % 3 === 0) {
           orderBook = await getOrderBook(marketId);
         }
 

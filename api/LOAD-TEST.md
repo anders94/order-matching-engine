@@ -92,7 +92,7 @@ node api/load-test-client.js -p <workers> <user-id> <market-id>
 Runs a parallel load test with multiple concurrent workers:
 - Spawns N worker threads that independently place orders
 - Workers share the same user and market
-- Each worker fetches order book every 10 trades
+- Each worker fetches order book every 3 trades
 - Prints aggregate statistics every 5 seconds
 - Shows final summary statistics on Ctrl+C
 - Individual worker errors are printed immediately
