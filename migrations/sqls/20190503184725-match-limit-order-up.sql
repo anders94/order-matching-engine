@@ -20,6 +20,7 @@ DECLARE
   amount_remaining NUMERIC;
   lot_size NUMERIC;
 BEGIN
+  SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
   -- Validate inputs are integers
   IF scale(_price) != 0 OR scale(_amount) != 0 THEN
     RAISE EXCEPTION 'Price and amount must be integers (scale=0)';
